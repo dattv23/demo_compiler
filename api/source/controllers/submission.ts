@@ -51,21 +51,6 @@ const getSubmission = async (req: Request, res: Response, next: NextFunction) =>
       }
 };
 
-const idRandom = (length: number): string => {
-      // Generate a random number with the desired number of digits
-      const min = Math.pow(10, length - 1);
-      const max = Math.pow(10, length) - 1;
-      const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
-
-      // Convert the random number to a string
-      const randomNumberString = randomNumber.toString();
-
-      // Ensure the string has the desired length by adding leading zeros if needed
-      const leadingZeros = '0'.repeat(length - randomNumberString.length);
-
-      return leadingZeros + randomNumberString;
-}
-
 // adding a Submission
 const addSubmission = async (req: Request, res: Response, next: NextFunction) => {
       // get the data from req.body
@@ -74,9 +59,16 @@ const addSubmission = async (req: Request, res: Response, next: NextFunction) =>
       let body: string = req.body.body;
       let language: string = req.body.language;
 
-      if (!userId || !title || !body) {
+      const missingFields: string[] = [];
+
+      if (!userId) missingFields.push("userId");
+      if (!title) missingFields.push("title");
+      if (!body) missingFields.push("body");
+
+      if (missingFields.length > 0) {
             return res.status(400).json({
                   message: 'Missing required fields',
+                  missingFields: missingFields,
             });
       }
 
@@ -108,7 +100,6 @@ const addSubmission = async (req: Request, res: Response, next: NextFunction) =>
       try {
             const result = await resultPromise;
             const submission = new Submission({
-                  id: idRandom(8),
                   userId,
                   title,
                   body,

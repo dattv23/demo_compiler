@@ -4,6 +4,7 @@ import morgan from 'morgan'; // record log request, error in console
 import routes from './routes/submission';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -15,6 +16,8 @@ router.use(morgan('dev'));
 router.use(express.urlencoded({ extended: false }));
 /** Takes care of JSON data */
 router.use(express.json());
+// Allow requests from the specified origin
+router.use(cors({ origin: 'http://localhost:3000' }))
 
 // Connect to the database
 mongoose.connect(`mongodb+srv://datvan635:${process.env.MONGO_CLOUD}@code-arena.m5zvedw.mongodb.net/code-arena`, {
@@ -38,7 +41,7 @@ router.use((req, res, next) => {
 });
 
 /** Routes */
-router.use('/', routes);
+router.use('/api', routes);
 
 /** Error handling */
 router.use((req, res, next) => {
