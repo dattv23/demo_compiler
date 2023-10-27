@@ -19,25 +19,22 @@ export const excuteCpp = (filePath: string) => {
             exec(
                   `g++ ${filePath} -o "${outPath}"`,
                   (compileError, compileStdout, compileStderr) => {
-                        if (compileError) {
-                              reject({ error: compileError, stderr: compileStderr });
-                        } else {
-                              console.log('C++ compilation successful.');
-                              exec(
-                                    `"${outPath}"`,
-                                    (runError, runStdout, runStderr) => {
-                                          if (runError) {
-                                                reject({ error: runError, stderr: runStderr });
-                                          } else {
-                                                resolve(runStdout);
-                                          }
-                                    }
-                              );
-                        }
+                        compileError && reject({ error: compileError, stderr: compileStderr });
+                        compileStderr && reject(compileStderr);
+                        exec(
+                              `"${outPath}"`,
+                              (runError, runStdout, runStderr) => {
+                                    runError && reject({ runError, runStderr });
+                                    runStderr && reject(runStderr);
+                                    resolve(runStdout);
+                              }
+                        )
+
                   }
             );
       })
             .catch((error) => {
                   console.error('Error executing C++:', error);
+                  throw error.stderr;
             });
 };

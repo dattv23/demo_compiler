@@ -13,12 +13,12 @@ const addSubmission = async (req: Request, res: Response, next: NextFunction) =>
             });
       }
 
+      const filePath = await generateFile(language, code);
       try {
-            const filePath = await generateFile(language, code);
             const output = await excuteCpp(filePath);
             return res.json({ filePath, output });
       } catch (error) {
-            res.status(500).json({ error });
+            res.status(500).json({ filePath, error });
       }
 }
 

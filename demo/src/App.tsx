@@ -7,8 +7,8 @@ const languages = ["c", "cpp", "javascript", "java", "python"];
 export default function App() {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [sourceCode, setSourceCode] = useState("");
-  const [stdout, setStdout] = useState("");
-  const [stderr, setStderr] = useState("");
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState([]);
 
   const onChange = (value: string) => {
     setSelectedLanguage(value);
@@ -16,28 +16,34 @@ export default function App() {
 
   const submit = async () => {
     try {
+      setError([]);
+      setOutput("");
       const response = await fetch('http://localhost:8080/api/submissions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          "userId": 1,
-          "title": "TEST",
-          "body": sourceCode,
+          "code": sourceCode,
           "language": selectedLanguage
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
       const data = await response.json();
 
+      if (!response.ok) {
+        const errorMessages = data.error.match(/error:.*$/gm); // Extract only lines that start with "error:"
+        if (errorMessages) {
+          setError(errorMessages);
+        } else {
+          setError(data.error);
+        }
+        // throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+
       // Set the stdout in the state to display it
-      setStdout(data.result.stdout);
-      setStderr(data.result.stderr);
+      setOutput(data.output);
 
     } catch (error) {
       console.error(error);
@@ -53,7 +59,7 @@ export default function App() {
         <div className="mt-2 flex justify-end">
           <p>Language</p>
           <Select
-            className="mr-2 ml-2"
+            className="mr-2 ml-2 w-24"
             showSearch
             placeholder="Select a language"
             optionFilterProp="children"
@@ -66,15 +72,16 @@ export default function App() {
         <div>
           <Button type="primary" className="bg-red-400" onClick={submit}>Submission</Button>
         </div>
-        {stderr ?
-          <div className="m-2">
-            <h2>Error:</h2>
-            <p>{stderr.slice(stderr.indexOf(',') + 1)}</p>
-          </div> :
-          <div className="m-2">
-            <h2>Output:</h2>
-            <p>{stdout}</p>
-          </div>
+        {
+          error.length != 0 ?
+            <div className="m-2">
+              <h2>Errors:</h2>
+              {error.map((item) => <p>{item}</p>)}
+            </div> :
+            <div className="m-2">
+              <h2>Output:</h2>
+              <p>{output}</p>
+            </div>
         }
       </div>
     </div>
