@@ -13,11 +13,11 @@ const router: Express = express();
 /** Logging */
 router.use(morgan('dev'));
 /** Parse the request */
-router.use(express.urlencoded({ extended: false }));
+router.use(express.urlencoded({ extended: true }));
 /** Takes care of JSON data */
 router.use(express.json());
 // Allow requests from the specified origin
-router.use(cors({ origin: 'http://localhost:3000' }))
+router.use(cors())
 
 // Connect to the database
 mongoose.connect(`mongodb+srv://datvan635:${process.env.MONGO_CLOUD}@code-arena.m5zvedw.mongodb.net/code-arena`, {
