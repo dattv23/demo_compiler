@@ -1,97 +1,68 @@
 import { Select, Button } from "antd";
 import { Input } from "antd";
-import axios from "axios";
-import moment from "moment";
 import { useState } from "react";
+import axios from "axios";
+import CodeMirror from '@uiw/react-codemirror';;
 
 const languages = ["c", "cpp", "javascript", "java", "python"];
-
-interface SubmissionDetail {
-  submittedAt: Date,
-  startedAt: Date,
-  completedAt: Date
-}
 
 export default function App() {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [sourceCode, setSourceCode] = useState("");
-  const [submissionId, setSunmissionId] = useState(null);
-  const [status, setStatus] = useState<string>();
-  const [submissionDetail, setSubmissionDetail] = useState<SubmissionDetail>();
   const [output, setOutput] = useState("");
-  const [error, setError] = useState([]);
+  const [status, setStatus] = useState("");
 
   const onChange = (value: string) => {
     setSelectedLanguage(value);
   };
 
-  let pollInterval: NodeJS.Timer;
   const submit = async () => {
     try {
-      setError([]);
-
-      const { data } = await axios.post("http://localhost:8080/api/submissions", {
-        "code": sourceCode,
-        "language": selectedLanguage
-      });
-      if (data.submissionId) {
-        setSunmissionId(data.submissionId);
-        setStatus("Submitted.");
-        console.log('====================================');
-        console.log(data.submissionId);
-        console.log('====================================');
-        // poll here
-        pollInterval = setInterval(async () => {
-          const { data: statusRes } = await axios.get(
-            `http://localhost:8080/api/statusSubmissions`,
-            {
-              params: {
-                id: data.submissionId,
-              },
-            }
-          );
-          const { success, submission, error } = statusRes;
-          console.log(statusRes);
-          if (success) {
-            const { status, output } = submission;
-            setStatus(status);
-            setSubmissionDetail(submission);
-            if (status === "pending") return;
-            setOutput(output);
-            clearInterval(pollInterval);
-          } else {
-            console.error(error);
-            setOutput(error);
-            setStatus("Bad request");
-            clearInterval(pollInterval);
-          }
-        }, 1000);
+      setOutput("");
+      const { data } = await axios.post(
+        'http://localhost:8080/api/submissions',
+        {
+          "code": sourceCode,
+          "language": selectedLanguage
+        }
+      );
+      setOutput(data.output);
+      let intervalId = setInterval(async () => {
+        const { data: dataRes } = await axios.get(
+          "http://localhost:8080/api/statusSubmissions",
+          { params: { id: data.submissionId } }
+        );
+        const { success, submission, error } = dataRes;
+        if (success) {
+          const { statusSubmit, output } = submission;
+          setStatus(statusSubmit);
+          if (statusSubmit === "pending") return;
+          setOutput(output);
+          clearInterval(intervalId);
+        } else {
+          setStatus("Error: Please retry!");
+          setOutput(error);
+          clearInterval(intervalId);
+        }
+      }, 1000);
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        // Xử lý lỗi Axios
+        if (error.response) {
+          const errMsg = error.response.data.err.stderr;
+          setOutput(errMsg);
+        } else {
+          setOutput("Error connecting to the server!");
+        }
       } else {
-        setOutput("Retry again.");
+        // Xử lý các lỗi khác
+        setOutput("An error occurred: " + error.message);
       }
-    } catch (error) {
-      console.error(error);
     }
   }
 
   const filterOption = (input: string, option?: { label: string; value: string }) =>
     (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
-
-  const renderTimeDetails = () => {
-    if (!submissionDetail) {
-      return "";
-    }
-    let { submittedAt, startedAt, completedAt } = submissionDetail;
-    let result = "";
-    const timeSubmit = moment(submittedAt).toString();
-    result += `Submitted At: ${timeSubmit}  `;
-    if (!startedAt || !completedAt) return result;
-    const start = moment(startedAt);
-    const end = moment(completedAt);
-    const diff = end.diff(start, "seconds", true);
-    result += `Execution Time: ${diff}s`;
-    return result;
-  };
 
   return (
     <div className="h-screen w-screen bg-slate-500 flex items-center justify-center">
@@ -108,23 +79,16 @@ export default function App() {
             options={languages.map(value => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))}
           />
         </div>
-        <Input.TextArea rows={10} className="m-2" value={sourceCode} onChange={(e) => setSourceCode(e.target.value)} />
+        <CodeMirror value={sourceCode} className="w-full h-60 my-2" onChange={(value) => setSourceCode(value)} />
+        {/* <Input.TextArea rows={10} className="m-2" value={sourceCode} onChange={(e) => setSourceCode(e.target.value)} /> */}
         <div>
           <Button type="primary" className="bg-red-400" onClick={submit}>Submission</Button>
         </div>
-        {
-          error.length !== 0 ?
-            <div className="m-2">
-              <h2>Errors:</h2>
-              {error.map((item) => <p>{item}</p>)}
-            </div> :
-            <div className="m-2">
-              <p>{status}</p>
-              <p>{submissionId ? `Job ID: ${submissionId}` : ""}</p>
-              <p>{renderTimeDetails()}</p>
-              <p>{output}</p>
-            </div>
-        }
+        <div className="m-2">
+          <p>{status}</p>
+          <h2>Output:</h2>
+          <p>{output}</p>
+        </div>
       </div>
     </div>
   );

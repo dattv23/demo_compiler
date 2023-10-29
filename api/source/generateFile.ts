@@ -10,7 +10,10 @@ if (!fs.existsSync(dirCodes)) {
 }
 
 export const generateFile = async (language: string, code: string) => {
-      const subId = uuid();
+      let subId = uuid();
+      if (language === "javascript") language = "js";
+      if (language === "c") language = "cpp";
+      if (language == "java") subId = "Main";
       const filename = `${subId}.${language}`;
       const dirPath = `${dirCodes}/${language}`;
       if (!fs.existsSync(dirPath)) {
