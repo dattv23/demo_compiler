@@ -2,11 +2,35 @@ import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 const SubmissionSchema = new Schema({
-      userId: Number,
-      title: String,
-      body: String,
-      language: String,
-      result: String,
+      language: {
+            type: String,
+            require: true,
+            enum: ["c", "cpp", "java", "javascript", "python"]
+      },
+      filePath: {
+            type: String,
+            require: true
+      },
+      submittedAt: {
+            type: Date
+      },
+      startedAt: {
+            type: Date
+      },
+      completedAt: {
+            type: Date
+      },
+      input: {
+            type: String
+      },
+      output: {
+            type: String
+      },
+      status: {
+            type: String,
+            default: "pending",
+            enum: ["pending", "success", "error"]
+      }
 });
 
 export const Submission = mongoose.model('Submission', SubmissionSchema);

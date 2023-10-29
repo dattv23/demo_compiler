@@ -8,7 +8,7 @@ if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath, { recursive: true });
 }
 
-export const excuteCpp = (filePath: string) => {
+export const executeCpp = async (filePath: string) => {
       const subId = path.basename(filePath).split('.')[0];
       const outputDir = `${outputPath}/cpp`;
       if (!fs.existsSync(outputDir)) {
@@ -34,7 +34,7 @@ export const excuteCpp = (filePath: string) => {
             );
       })
             .catch((error) => {
-                  console.error('Error executing C++:', error);
+                  // console.error('Error executing C++:', error);
                   throw error.stderr;
             });
 };
