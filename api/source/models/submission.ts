@@ -21,10 +21,10 @@ const SubmissionSchema = new Schema({
             type: Date
       },
       input: {
-            type: String
+            type: []
       },
       output: {
-            type: String
+            type: []
       },
       status: {
             type: String,

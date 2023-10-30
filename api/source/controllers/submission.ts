@@ -8,7 +8,7 @@ import { executePython } from '../executes/executePython';
 import { ObjectId } from 'mongodb';
 
 const addSubmission = async (req: Request, res: Response, next: NextFunction) => {
-      const { language, code } = req.body;
+      const { language, code, input } = req.body;
       if (code === undefined) {
             return res.status(400).json({
                   success: false,
@@ -29,16 +29,16 @@ const addSubmission = async (req: Request, res: Response, next: NextFunction) =>
             switch (language) {
                   case "c":
                   case "cpp":
-                        output = await executeCpp(filePath);
+                        output = await executeCpp(filePath, input);
                         break;
                   case "java":
-                        output = await executeJava(filePath);
+                        output = await executeJava(filePath, input);
                         break;
                   case "javascript":
-                        output = await executeJS(filePath);
+                        output = await executeJS(filePath, input);
                         break;
                   case "python":
-                        output = await executePython(filePath);
+                        output = await executePython(filePath, input);
                         break;
                   default:
                         break;
@@ -46,9 +46,8 @@ const addSubmission = async (req: Request, res: Response, next: NextFunction) =>
 
             submission["completedAt"] = new Date();
             submission["status"] = "success";
-            submission["output"] = output as string;
+            submission["output"] = output as string[];
             await submission.save();
-
             // return res.status(200).json({ success: true, output });
       } catch (error) {
             submission["completedAt"] = new Date();
