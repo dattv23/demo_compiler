@@ -16,6 +16,13 @@ const addSubmission = async (req: Request, res: Response, next: NextFunction) =>
             });
       }
 
+      if (!language) {
+            return res.status(400).json({
+                  success: false,
+                  error: "Language is required!"
+            });
+      }
+
       let submission: any;
       try {
             const filePath = await generateFile(language, code);
